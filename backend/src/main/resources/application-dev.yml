@@ -1,0 +1,50 @@
+# 开发环境配置
+spring:
+  # 数据源配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/rule_engine?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      auto-commit: true
+      idle-timeout: 30000
+      pool-name: RuleEngineHikariCP
+      max-lifetime: 1800000
+      connection-timeout: 30000
+
+  # Redis配置
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password: 123456
+    database: 1
+    timeout: 3000
+    lettuce:
+      pool:
+        max-active: 8
+        max-wait: -1
+        max-idle: 8
+        min-idle: 0
+
+# JWT配置
+jwt:
+  secret: YourSecretKeyForJWTMustBeLongEnoughAndSecure123456
+  expiration: 7200  # 2小时,单位秒
+  header: Authorization
+
+# Drools配置
+drools:
+  enabled: true
+  path: drools/
+  mode: STREAM
+  update: true
+
+# 日志文件
+logging:
+  file:
+    name: logs/rule-engine-dev.log
+  level:
+    com.example.ruleengine: debug

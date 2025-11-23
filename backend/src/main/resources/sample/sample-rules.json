@@ -1,0 +1,192 @@
+{
+  "exportTime": "2024-01-01T00:00:00",
+  "exportBy": "system",
+  "rules": [
+    {
+      "ruleCode": "ID_COVID19_REPORT",
+      "ruleName": "新冠病毒感染上报规则",
+      "ruleDesc": "当检测到新冠病毒核酸阳性或抗原阳性时，触发传染病上报",
+      "sceneCode": "INFECTIOUS_DISEASE",
+      "ruleType": "CONDITION",
+      "priority": 100,
+      "status": 1,
+      "effectiveStartTime": "2024-01-01T00:00:00",
+      "effectiveEndTime": "2099-12-31T23:59:59",
+      "conditions": [
+        {
+          "fieldCode": "lab_covid_pcr",
+          "operator": "EQ",
+          "fieldValue": "阳性",
+          "valueType": "CONSTANT",
+          "groupId": 1,
+          "groupLogic": "OR",
+          "sortOrder": 1
+        },
+        {
+          "fieldCode": "lab_covid_antigen",
+          "operator": "EQ",
+          "fieldValue": "阳性",
+          "valueType": "CONSTANT",
+          "groupId": 1,
+          "groupLogic": "OR",
+          "sortOrder": 2
+        }
+      ],
+      "actions": [
+        {
+          "actionCode": "COVID19_REPORT",
+          "actionType": "RETURN",
+          "actionParams": "{\"diseaseCode\":\"U07.1\",\"diseaseName\":\"新型冠状病毒感染\",\"reportLevel\":\"乙类甲管\",\"reportType\":\"MANDATORY\",\"message\":\"检测到新冠病毒阳性，需上报传染病报卡\"}",
+          "sortOrder": 1
+        }
+      ]
+    },
+    {
+      "ruleCode": "PA_ELDERLY_DOSAGE_CHECK",
+      "ruleName": "老年人剂量审核",
+      "ruleDesc": "65岁以上老年人用药剂量需要特别关注",
+      "sceneCode": "PRESCRIPTION_AUDIT",
+      "ruleType": "CONDITION",
+      "priority": 85,
+      "status": 1,
+      "effectiveStartTime": "2024-01-01T00:00:00",
+      "effectiveEndTime": "2099-12-31T23:59:59",
+      "conditions": [
+        {
+          "fieldCode": "patient_age",
+          "operator": "GTE",
+          "fieldValue": "65",
+          "valueType": "CONSTANT",
+          "groupId": 1,
+          "groupLogic": "AND",
+          "sortOrder": 1
+        },
+        {
+          "fieldCode": "drug_dosage",
+          "operator": "GT",
+          "fieldValue": "80",
+          "valueType": "CONSTANT",
+          "groupId": 1,
+          "groupLogic": "AND",
+          "sortOrder": 2
+        }
+      ],
+      "actions": [
+        {
+          "actionCode": "ELDERLY_DOSAGE_ALERT",
+          "actionType": "RETURN",
+          "actionParams": "{\"alertLevel\":\"WARNING\",\"alertType\":\"ELDERLY_DOSAGE\",\"message\":\"老年患者用药剂量偏高，建议减量使用\"}",
+          "sortOrder": 1
+        }
+      ]
+    },
+    {
+      "ruleCode": "PA_ANTIBIOTIC_DURATION_CHECK",
+      "ruleName": "抗生素疗程审核",
+      "ruleDesc": "抗生素用药超过7天需要审核",
+      "sceneCode": "PRESCRIPTION_AUDIT",
+      "ruleType": "CONDITION",
+      "priority": 80,
+      "status": 1,
+      "effectiveStartTime": "2024-01-01T00:00:00",
+      "effectiveEndTime": "2099-12-31T23:59:59",
+      "conditions": [
+        {
+          "fieldCode": "drug_name",
+          "operator": "LIKE",
+          "fieldValue": "霉素",
+          "valueType": "CONSTANT",
+          "groupId": 1,
+          "groupLogic": "AND",
+          "sortOrder": 1
+        },
+        {
+          "fieldCode": "drug_days",
+          "operator": "GT",
+          "fieldValue": "7",
+          "valueType": "CONSTANT",
+          "groupId": 1,
+          "groupLogic": "AND",
+          "sortOrder": 2
+        }
+      ],
+      "actions": [
+        {
+          "actionCode": "ANTIBIOTIC_DURATION_ALERT",
+          "actionType": "RETURN",
+          "actionParams": "{\"alertLevel\":\"INFO\",\"alertType\":\"ANTIBIOTIC_DURATION\",\"message\":\"抗生素用药超过7天，请确认是否有明确适应症\"}",
+          "sortOrder": 1
+        }
+      ]
+    },
+    {
+      "ruleCode": "MR_ADMISSION_RECORD_CHECK",
+      "ruleName": "入院记录及时性检查",
+      "ruleDesc": "检查入院记录是否在24小时内完成",
+      "sceneCode": "MEDICAL_RECORD_QC",
+      "ruleType": "CONDITION",
+      "priority": 85,
+      "status": 1,
+      "effectiveStartTime": "2024-01-01T00:00:00",
+      "effectiveEndTime": "2099-12-31T23:59:59",
+      "conditions": [
+        {
+          "fieldCode": "admission_record_time",
+          "operator": "GT",
+          "fieldValue": "24",
+          "valueType": "CONSTANT",
+          "groupId": 1,
+          "groupLogic": "AND",
+          "sortOrder": 1
+        }
+      ],
+      "actions": [
+        {
+          "actionCode": "ADMISSION_RECORD_DELAY",
+          "actionType": "RETURN",
+          "actionParams": "{\"qcLevel\":\"WARNING\",\"qcType\":\"TIMELINESS\",\"deductPoints\":5,\"message\":\"入院记录未在24小时内完成，请及时补录\"}",
+          "sortOrder": 1
+        }
+      ]
+    },
+    {
+      "ruleCode": "MR_CRITICAL_RECORD_CHECK",
+      "ruleName": "危重患者记录检查",
+      "ruleDesc": "危重患者需要有抢救记录",
+      "sceneCode": "MEDICAL_RECORD_QC",
+      "ruleType": "CONDITION",
+      "priority": 95,
+      "status": 1,
+      "effectiveStartTime": "2024-01-01T00:00:00",
+      "effectiveEndTime": "2099-12-31T23:59:59",
+      "conditions": [
+        {
+          "fieldCode": "patient_level",
+          "operator": "EQ",
+          "fieldValue": "危重",
+          "valueType": "CONSTANT",
+          "groupId": 1,
+          "groupLogic": "AND",
+          "sortOrder": 1
+        },
+        {
+          "fieldCode": "rescue_record",
+          "operator": "IS_NULL",
+          "fieldValue": "",
+          "valueType": "CONSTANT",
+          "groupId": 1,
+          "groupLogic": "AND",
+          "sortOrder": 2
+        }
+      ],
+      "actions": [
+        {
+          "actionCode": "CRITICAL_RECORD_MISSING",
+          "actionType": "RETURN",
+          "actionParams": "{\"qcLevel\":\"ERROR\",\"qcType\":\"COMPLETENESS\",\"deductPoints\":15,\"message\":\"危重患者缺少抢救记录，请补充完善\"}",
+          "sortOrder": 1
+        }
+      ]
+    }
+  ]
+}
