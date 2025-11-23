@@ -1,9 +1,29 @@
-# 生产环境配置
+# ==============================================
+# 规则引擎 - 生产环境配置
+# ==============================================
+
+server:
+  port: 8080
+  tomcat:
+    max-threads: 200
+    min-spare-threads: 20
+    accept-count: 100
+    connection-timeout: 20000
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/plain
+    min-response-size: 1024
+  # 安全配置
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-exception: false
+
 spring:
   # 数据源配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://mysql-server:3306/rule_engine?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://${DB_HOST:mysql-server}:${DB_PORT:3306}/rule_engine?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=false
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     hikari:
@@ -14,6 +34,8 @@ spring:
       pool-name: RuleEngineHikariCP
       max-lifetime: 1800000
       connection-timeout: 30000
+      leak-detection-threshold: 60000
+      validation-timeout: 5000
 
   # Redis配置
   redis:
@@ -25,9 +47,16 @@ spring:
     lettuce:
       pool:
         max-active: 20
-        max-wait: -1
+        max-wait: -1ms
         max-idle: 10
         min-idle: 5
+      shutdown-timeout: 100ms
+
+  # Jackson配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    default-property-inclusion: non_null
 
 # JWT配置
 jwt:
@@ -42,10 +71,78 @@ drools:
   mode: STREAM
   update: true
 
+# ==============================================
+# Spring Boot Actuator 监控配置
+# ==============================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when_authorized
+      show-components: when_authorized
+    metrics:
+      enabled: true
+  metrics:
+    tags:
+      application: rule-engine
+    export:
+      prometheus:
+        enabled: true
+  health:
+    db:
+      enabled: true
+    redis:
+      enabled: true
+    diskspace:
+      enabled: true
+      threshold: 10GB
+
+# ==============================================
+# 应用信息配置
+# ==============================================
+info:
+  app:
+    name: 规则引擎
+    version: 1.0.0
+    description: 通用业务规则管理平台
+  build:
+    time: ${build.time:unknown}
+    version: ${build.version:1.0.0}
+
+# ==============================================
 # 日志配置
+# ==============================================
 logging:
   file:
     name: /var/log/rule-engine/application.log
+    max-size: 100MB
+    max-history: 30
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
   level:
+    root: info
     com.example.ruleengine: info
     com.example.ruleengine.mapper: warn
+    org.springframework.security: warn
+    org.drools: warn
+
+# ==============================================
+# 缓存配置
+# ==============================================
+cache:
+  rule:
+    expire-after-write: 30
+    expire-after-access: 10
+    maximum-size: 1000
+
+# ==============================================
+# 限流配置
+# ==============================================
+rate-limit:
+  enabled: true
+  default-limit: 100
+  default-duration: 60

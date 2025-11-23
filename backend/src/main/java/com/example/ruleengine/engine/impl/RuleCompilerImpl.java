@@ -23,7 +23,29 @@ import java.util.stream.Collectors;
 
 /**
  * 规则编译器实现
- * 负责将数据库中的规则定义转换为Drools DRL格式
+ * <p>
+ * 负责将数据库中的规则定义转换为Drools DRL（Drools Rule Language）格式。
+ * </p>
+ *
+ * <h3>核心功能：</h3>
+ * <ul>
+ *   <li>将条件配置转换为Drools eval表达式</li>
+ *   <li>将动作配置转换为Drools then块代码</li>
+ *   <li>支持条件组的AND/OR逻辑组合</li>
+ *   <li>提供DRL语法验证</li>
+ * </ul>
+ *
+ * <h3>支持的操作符：</h3>
+ * <ul>
+ *   <li>比较：EQ, NEQ, GT, GTE, LT, LTE</li>
+ *   <li>集合：IN, NOT_IN</li>
+ *   <li>字符串：LIKE, CONTAINS, STARTS_WITH, ENDS_WITH</li>
+ *   <li>范围：BETWEEN</li>
+ *   <li>空值：IS_NULL, IS_NOT_NULL</li>
+ * </ul>
+ *
+ * @author 开发团队
+ * @since 1.0.0
  */
 @Slf4j
 @Component

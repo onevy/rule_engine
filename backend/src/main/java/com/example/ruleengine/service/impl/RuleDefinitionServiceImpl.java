@@ -37,6 +37,20 @@ import java.util.stream.Collectors;
 
 /**
  * 规则定义 Service 实现类
+ * <p>
+ * 提供规则的完整生命周期管理，包括：
+ * <ul>
+ *   <li>规则的CRUD操作（创建、读取、更新、删除）</li>
+ *   <li>规则条件和动作的关联管理</li>
+ *   <li>规则版本控制和历史记录</li>
+ *   <li>规则的导入导出功能</li>
+ *   <li>规则状态管理（启用/禁用）</li>
+ *   <li>规则缓存管理</li>
+ * </ul>
+ * </p>
+ *
+ * @author 开发团队
+ * @since 1.0.0
  */
 @Slf4j
 @Service
@@ -53,26 +67,64 @@ public class RuleDefinitionServiceImpl extends ServiceImpl<RuleDefinitionMapper,
     @org.springframework.beans.factory.annotation.Autowired
     private RuleCompiler ruleCompiler;
 
+    /**
+     * 根据规则编码查询规则
+     *
+     * @param ruleCode 规则唯一编码
+     * @return 规则定义，不存在返回null
+     */
     @Override
     public RuleDefinition getByRuleCode(String ruleCode) {
         return baseMapper.selectByRuleCode(ruleCode);
     }
 
+    /**
+     * 查询指定场景下的所有规则
+     *
+     * @param sceneCode 业务场景编码
+     * @return 规则列表
+     */
     @Override
     public List<RuleDefinition> listBySceneCode(String sceneCode) {
         return baseMapper.selectBySceneCode(sceneCode);
     }
 
+    /**
+     * 查询指定规则组下的所有规则
+     *
+     * @param groupId 规则组ID
+     * @return 规则列表
+     */
     @Override
     public List<RuleDefinition> listByGroupId(Long groupId) {
         return baseMapper.selectByGroupId(groupId);
     }
 
+    /**
+     * 查询指定场景下已启用且在有效期内的规则
+     * <p>用于规则引擎执行时加载活跃规则</p>
+     *
+     * @param sceneCode 业务场景编码
+     * @return 活跃规则列表
+     */
     @Override
     public List<RuleDefinition> listActiveBySceneCode(String sceneCode) {
         return baseMapper.selectActiveBySceneCode(sceneCode);
     }
 
+    /**
+     * 分页查询规则列表
+     * <p>支持多条件组合筛选，结果按优先级和创建时间倒序排列</p>
+     *
+     * @param page      页码（从1开始）
+     * @param pageSize  每页大小
+     * @param sceneCode 场景编码（可选）
+     * @param ruleName  规则名称（模糊匹配，可选）
+     * @param ruleCode  规则编码（模糊匹配，可选）
+     * @param status    状态：0-禁用，1-启用（可选）
+     * @param groupId   规则组ID（可选）
+     * @return 分页结果
+     */
     @Override
     public Page<RuleDefinition> pageList(Integer page, Integer pageSize, String sceneCode,
                                           String ruleName, String ruleCode, Integer status, Long groupId) {
@@ -100,6 +152,24 @@ public class RuleDefinitionServiceImpl extends ServiceImpl<RuleDefinitionMapper,
         return baseMapper.selectPage(pageParam, wrapper);
     }
 
+    /**
+     * 创建规则
+     * <p>
+     * 完整的规则创建流程：
+     * <ol>
+     *   <li>校验规则编码唯一性</li>
+     *   <li>保存规则基本信息</li>
+     *   <li>创建条件组并保存条件</li>
+     *   <li>保存规则动作</li>
+     *   <li>生成JSON配置和DRL内容</li>
+     *   <li>创建初始版本记录</li>
+     * </ol>
+     * </p>
+     *
+     * @param rule 规则定义（包含条件和动作）
+     * @return 新创建的规则ID
+     * @throws BusinessException 规则编码已存在时抛出
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createRule(RuleDefinition rule) {
@@ -186,6 +256,16 @@ public class RuleDefinitionServiceImpl extends ServiceImpl<RuleDefinitionMapper,
         return rule.getId();
     }
 
+    /**
+     * 更新规则
+     * <p>
+     * 更新流程会删除旧的条件和动作，重新创建新的关联数据。
+     * 同时自动递增版本号并创建版本记录。
+     * </p>
+     *
+     * @param rule 规则定义（包含条件和动作）
+     * @throws BusinessException 规则不存在或编码冲突时抛出
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = CACHE_RULE_DETAIL, key = "#rule.id")
@@ -283,6 +363,13 @@ public class RuleDefinitionServiceImpl extends ServiceImpl<RuleDefinitionMapper,
         createVersionRecord(rule, "更新规则");
     }
 
+    /**
+     * 删除规则
+     * <p>级联删除规则的条件、条件组和动作</p>
+     *
+     * @param id 规则ID
+     * @throws BusinessException 规则不存在时抛出
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = CACHE_RULE_DETAIL, key = "#id")
@@ -305,6 +392,22 @@ public class RuleDefinitionServiceImpl extends ServiceImpl<RuleDefinitionMapper,
         baseMapper.deleteById(id);
     }
 
+    /**
+     * 复制规则
+     * <p>
+     * 创建一个规则的副本，包含：
+     * <ul>
+     *   <li>新的规则编码（原编码_COPY_时间戳）</li>
+     *   <li>新的规则名称（原名称_副本）</li>
+     *   <li>复制所有条件和动作</li>
+     *   <li>副本默认为禁用状态</li>
+     * </ul>
+     * </p>
+     *
+     * @param id 源规则ID
+     * @return 新规则的ID
+     * @throws BusinessException 源规则不存在时抛出
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long copyRule(Long id) {
@@ -374,6 +477,16 @@ public class RuleDefinitionServiceImpl extends ServiceImpl<RuleDefinitionMapper,
         baseMapper.updateById(existing);
     }
 
+    /**
+     * 获取规则完整详情
+     * <p>
+     * 包含规则的条件列表和动作列表，支持缓存。
+     * 每个条件会关联其所属条件组的逻辑关系(AND/OR)。
+     * </p>
+     *
+     * @param id 规则ID
+     * @return 规则详情（包含条件和动作），不存在返回null
+     */
     @Override
     @Cacheable(value = CACHE_RULE_DETAIL, key = "#id", unless = "#result == null")
     public RuleDefinition getRuleDetail(Long id) {
@@ -480,6 +593,21 @@ public class RuleDefinitionServiceImpl extends ServiceImpl<RuleDefinitionMapper,
         ruleVersionService.createVersion(version);
     }
 
+    /**
+     * 导出规则
+     * <p>
+     * 支持三种导出方式：
+     * <ul>
+     *   <li>按规则ID列表导出（优先）</li>
+     *   <li>按场景编码导出该场景下所有规则</li>
+     *   <li>导出所有规则（两个参数都为空时）</li>
+     * </ul>
+     * </p>
+     *
+     * @param ruleIds   规则ID列表（可选）
+     * @param sceneCode 场景编码（可选）
+     * @return 规则导出DTO列表
+     */
     @Override
     public List<RuleExportDTO> exportRules(List<Long> ruleIds, String sceneCode) {
         List<RuleDefinition> rules;
@@ -557,6 +685,20 @@ public class RuleDefinitionServiceImpl extends ServiceImpl<RuleDefinitionMapper,
         return dto;
     }
 
+    /**
+     * 导入规则
+     * <p>
+     * 支持三种冲突处理策略：
+     * <ul>
+     *   <li>SKIP：跳过已存在的规则</li>
+     *   <li>OVERWRITE：覆盖已存在的规则</li>
+     *   <li>RENAME：自动重命名后导入</li>
+     * </ul>
+     * </p>
+     *
+     * @param request 导入请求（包含规则列表和冲突策略）
+     * @return 导入结果（成功/失败/跳过数量及详情）
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public RuleImportResult importRules(RuleImportRequest request) {
