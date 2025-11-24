@@ -57,6 +57,21 @@ public class RuleCondition implements Serializable {
     private String valueType;
 
     /**
+     * 聚合函数: SUM, AVG, MAX, MIN, COUNT
+     */
+    private String aggregateFunction;
+
+    /**
+     * 聚合字段列表，JSON数组格式，如 ["q1","q2","q3"]
+     */
+    private String aggregateFields;
+
+    /**
+     * 计算表达式，用于 EXPRESSION 操作符，支持 SpEL 语法
+     */
+    private String expression;
+
+    /**
      * 排序号
      */
     private Integer sortOrder;

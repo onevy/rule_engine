@@ -35,6 +35,16 @@ public class BusinessScene extends BaseEntity {
     private String adapterClass;
 
     /**
+     * 评估题目字段命名模式，如 q{n} 表示 q1,q2,...qN
+     */
+    private String itemPattern;
+
+    /**
+     * 评估题目数量，0表示动态数量（自动识别）
+     */
+    private Integer itemCount;
+
+    /**
      * 状态: 0-禁用, 1-启用
      */
     private Integer status;

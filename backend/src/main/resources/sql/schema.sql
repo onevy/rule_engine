@@ -19,6 +19,8 @@ CREATE TABLE `business_scene` (
   `scene_name` VARCHAR(100) NOT NULL COMMENT '场景名称',
   `scene_desc` VARCHAR(500) DEFAULT NULL COMMENT '场景描述',
   `adapter_class` VARCHAR(200) NOT NULL COMMENT '适配器类全限定名',
+  `item_pattern` VARCHAR(50) DEFAULT NULL COMMENT '评估题目字段命名模式，如 q{n} 表示 q1,q2,...qN',
+  `item_count` INT DEFAULT 0 COMMENT '评估题目数量，0表示动态数量（自动识别）',
   `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态: 0-禁用, 1-启用',
   `sort_order` INT DEFAULT 0 COMMENT '排序号',
   `create_by` VARCHAR(50) DEFAULT 'system' COMMENT '创建人',
@@ -143,9 +145,12 @@ CREATE TABLE `rule_condition` (
   `rule_id` BIGINT NOT NULL COMMENT '所属规则ID',
   `group_id` BIGINT NOT NULL COMMENT '所属条件组ID',
   `field_code` VARCHAR(100) NOT NULL COMMENT '字段编码',
-  `operator` VARCHAR(20) NOT NULL COMMENT '操作符: EQ, IN, GT, LT等',
+  `operator` VARCHAR(20) NOT NULL COMMENT '操作符: EQ, IN, GT, LT, SUM, EXPRESSION等',
   `field_value` TEXT COMMENT '字段值(JSON格式)',
   `value_type` VARCHAR(20) NOT NULL DEFAULT 'CONSTANT' COMMENT '值类型: CONSTANT, FIELD, ARRAY',
+  `aggregate_function` VARCHAR(20) DEFAULT NULL COMMENT '聚合函数: SUM, AVG, MAX, MIN, COUNT',
+  `aggregate_fields` TEXT DEFAULT NULL COMMENT '聚合字段列表，JSON数组格式，如 ["q1","q2","q3"]',
+  `expression` TEXT DEFAULT NULL COMMENT '计算表达式，用于 EXPRESSION 操作符，支持 SpEL 语法',
   `sort_order` INT DEFAULT 0 COMMENT '排序号',
   `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -221,7 +226,30 @@ CREATE TABLE `rule_version` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='规则版本表';
 
 -- =====================================================
--- 10. 性能优化索引
+-- 10. 评估分组映射表 (assessment_group_mapping)
+-- 用于多维度体质评估等分组计算场景
+-- =====================================================
+DROP TABLE IF EXISTS `assessment_group_mapping`;
+CREATE TABLE `assessment_group_mapping` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `scene_code` VARCHAR(50) NOT NULL COMMENT '所属场景编码',
+  `group_code` VARCHAR(50) NOT NULL COMMENT '分组编码，如 qixu, yangxu',
+  `group_name` VARCHAR(100) NOT NULL COMMENT '分组名称，如 气虚质',
+  `item_list` VARCHAR(500) NOT NULL COMMENT '题目编号列表，JSON数组格式，如 [2,3,4,14]',
+  `reverse_items` VARCHAR(500) DEFAULT NULL COMMENT '需要反向计分的题目编号，JSON数组格式',
+  `sort_order` INT DEFAULT 0 COMMENT '排序号',
+  `create_by` VARCHAR(50) DEFAULT 'system' COMMENT '创建人',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_by` VARCHAR(50) DEFAULT NULL COMMENT '更新人',
+  `update_time` DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `is_deleted` TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-否, 1-是',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_scene_group` (`scene_code`, `group_code`) USING BTREE,
+  KEY `idx_scene_code` (`scene_code`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='评估分组映射表';
+
+-- =====================================================
+-- 11. 性能优化索引
 -- =====================================================
 
 -- 规则定义表复合索引（用于列表查询）

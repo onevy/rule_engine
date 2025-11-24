@@ -256,3 +256,225 @@ INSERT INTO `rule_action` (`id`, `rule_id`, `action_type`, `action_code`, `actio
 
 -- 高额费用检查动作
 (16, 15, 'RETURN', 'HIGH_COST_ALERT', '{"qcLevel":"INFO","qcType":"COST","deductPoints":0,"message":"住院总费用超过5万元，请进行费用审核"}', 1);
+
+-- =====================================================
+-- 16. 评估量表业务场景配置
+-- =====================================================
+
+-- 自理能力评估场景
+INSERT INTO `business_scene` (`scene_code`, `scene_name`, `scene_desc`, `adapter_class`, `item_pattern`, `item_count`, `status`, `sort_order`, `create_by`) VALUES
+('SELF_CARE_ASSESSMENT', '老年人生活自理能力评估', '评估老年人日常生活自理能力，包括进餐、梳洗、穿衣、如厕、活动五个维度', 'com.example.ruleengine.adapter.TotalScoreAssessmentAdapter', 'q{n}', 5, 1, 4, 'system');
+
+-- 体质评估场景
+INSERT INTO `business_scene` (`scene_code`, `scene_name`, `scene_desc`, `adapter_class`, `item_pattern`, `item_count`, `status`, `sort_order`, `create_by`) VALUES
+('CONSTITUTION_ASSESSMENT', '中老年体质评估', '中医药健康管理服务体质辨识，包含33道题目，评估9种体质类型', 'com.example.ruleengine.adapter.GroupScoreAssessmentAdapter', 'q{n}', 33, 1, 5, 'system');
+
+-- =====================================================
+-- 17. 自理能力评估场景字段元数据
+-- =====================================================
+INSERT INTO `field_metadata` (`scene_code`, `field_code`, `field_name`, `field_type`, `data_source`, `supported_operators`, `value_range`, `category`, `sort_order`, `create_by`) VALUES
+-- 题目字段
+('SELF_CARE_ASSESSMENT', 'q1', '进餐', 'Number', '评估量表', 'EQ', '[{"label":"独立完成","value":0},{"label":"需协助","value":3},{"label":"完全需要帮助","value":5}]', '评估题目', 1, 'system'),
+('SELF_CARE_ASSESSMENT', 'q2', '梳洗', 'Number', '评估量表', 'EQ', '[{"label":"独立完成","value":0},{"label":"需协助","value":1},{"label":"部分完成","value":3},{"label":"完全需要帮助","value":7}]', '评估题目', 2, 'system'),
+('SELF_CARE_ASSESSMENT', 'q3', '穿衣', 'Number', '评估量表', 'EQ', '[{"label":"独立完成","value":0},{"label":"部分完成","value":3},{"label":"完全需要帮助","value":5}]', '评估题目', 3, 'system'),
+('SELF_CARE_ASSESSMENT', 'q4', '如厕', 'Number', '评估量表', 'EQ', '[{"label":"不需协助","value":0},{"label":"偶尔失禁","value":1},{"label":"经常失禁","value":5},{"label":"完全失禁","value":10}]', '评估题目', 4, 'system'),
+('SELF_CARE_ASSESSMENT', 'q5', '活动', 'Number', '评估量表', 'EQ', '[{"label":"独立完成","value":0},{"label":"借助辅助","value":1},{"label":"借助较大外力","value":5},{"label":"卧床不起","value":10}]', '评估题目', 5, 'system'),
+-- 计算字段
+('SELF_CARE_ASSESSMENT', 'totalScore', '总分', 'Number', '适配器计算', 'GT,GTE,LT,LTE,BETWEEN,EQ', '0-37', '计算结果', 10, 'system');
+
+-- =====================================================
+-- 18. 体质评估场景字段元数据（部分示例）
+-- =====================================================
+INSERT INTO `field_metadata` (`scene_code`, `field_code`, `field_name`, `field_type`, `data_source`, `supported_operators`, `value_range`, `category`, `sort_order`, `create_by`) VALUES
+-- 分组得分字段
+('CONSTITUTION_ASSESSMENT', 'qixu_score', '气虚质得分', 'Number', '适配器计算', 'GT,GTE,LT,LTE,BETWEEN,EQ', '4-20', '体质得分', 1, 'system'),
+('CONSTITUTION_ASSESSMENT', 'yangxu_score', '阳虚质得分', 'Number', '适配器计算', 'GT,GTE,LT,LTE,BETWEEN,EQ', '4-20', '体质得分', 2, 'system'),
+('CONSTITUTION_ASSESSMENT', 'yinxu_score', '阴虚质得分', 'Number', '适配器计算', 'GT,GTE,LT,LTE,BETWEEN,EQ', '4-20', '体质得分', 3, 'system'),
+('CONSTITUTION_ASSESSMENT', 'tanshi_score', '痰湿质得分', 'Number', '适配器计算', 'GT,GTE,LT,LTE,BETWEEN,EQ', '4-20', '体质得分', 4, 'system'),
+('CONSTITUTION_ASSESSMENT', 'shire_score', '湿热质得分', 'Number', '适配器计算', 'GT,GTE,LT,LTE,BETWEEN,EQ', '4-20', '体质得分', 5, 'system'),
+('CONSTITUTION_ASSESSMENT', 'xueyu_score', '血瘀质得分', 'Number', '适配器计算', 'GT,GTE,LT,LTE,BETWEEN,EQ', '4-20', '体质得分', 6, 'system'),
+('CONSTITUTION_ASSESSMENT', 'qiyu_score', '气郁质得分', 'Number', '适配器计算', 'GT,GTE,LT,LTE,BETWEEN,EQ', '4-20', '体质得分', 7, 'system'),
+('CONSTITUTION_ASSESSMENT', 'tebing_score', '特禀质得分', 'Number', '适配器计算', 'GT,GTE,LT,LTE,BETWEEN,EQ', '4-20', '体质得分', 8, 'system'),
+('CONSTITUTION_ASSESSMENT', 'pinghe_score', '平和质得分', 'Number', '适配器计算', 'GT,GTE,LT,LTE,BETWEEN,EQ', '5-25', '体质得分', 9, 'system'),
+('CONSTITUTION_ASSESSMENT', 'other_max_score', '其他体质最高分', 'Number', '适配器计算', 'GT,GTE,LT,LTE,BETWEEN,EQ', '4-20', '辅助计算', 10, 'system');
+
+-- =====================================================
+-- 19. 体质评估分组映射配置
+-- =====================================================
+INSERT INTO `assessment_group_mapping` (`scene_code`, `group_code`, `group_name`, `item_list`, `reverse_items`, `sort_order`, `create_by`) VALUES
+('CONSTITUTION_ASSESSMENT', 'qixu', '气虚质', '[2,3,4,14]', NULL, 1, 'system'),
+('CONSTITUTION_ASSESSMENT', 'yangxu', '阳虚质', '[11,12,13,29]', NULL, 2, 'system'),
+('CONSTITUTION_ASSESSMENT', 'yinxu', '阴虚质', '[10,21,26,31]', NULL, 3, 'system'),
+('CONSTITUTION_ASSESSMENT', 'tanshi', '痰湿质', '[9,16,28,32]', NULL, 4, 'system'),
+('CONSTITUTION_ASSESSMENT', 'shire', '湿热质', '[23,25,27,30]', NULL, 5, 'system'),
+('CONSTITUTION_ASSESSMENT', 'xueyu', '血瘀质', '[19,22,24,33]', NULL, 6, 'system'),
+('CONSTITUTION_ASSESSMENT', 'qiyu', '气郁质', '[5,6,7,8]', NULL, 7, 'system'),
+('CONSTITUTION_ASSESSMENT', 'tebing', '特禀质', '[15,17,18,20]', NULL, 8, 'system'),
+('CONSTITUTION_ASSESSMENT', 'pinghe', '平和质', '[1,2,4,5,13]', '[2,4,5,13]', 9, 'system');
+
+-- =====================================================
+-- 20. 评估量表规则组
+-- =====================================================
+INSERT INTO `rule_group` (`scene_code`, `group_code`, `group_name`, `group_desc`, `parent_id`, `execution_mode`, `sort_order`, `create_by`) VALUES
+('SELF_CARE_ASSESSMENT', 'SELF_CARE_LEVEL', '自理能力等级判定', '根据总分判定自理能力等级', 0, 'FIRST', 1, 'system'),
+('CONSTITUTION_ASSESSMENT', 'CONSTITUTION_DEVIANT', '偏颇体质判定', '判定8种偏颇体质', 0, 'ALL', 1, 'system'),
+('CONSTITUTION_ASSESSMENT', 'CONSTITUTION_BALANCED', '平和质判定', '判定平和质', 0, 'FIRST', 2, 'system');
+
+-- =====================================================
+-- 21. 自理能力评估规则定义
+-- =====================================================
+INSERT INTO `rule_definition` (`rule_code`, `rule_name`, `rule_desc`, `scene_code`, `group_id`, `rule_type`, `priority`, `status`, `effective_start_time`, `effective_end_time`, `version`, `create_by`) VALUES
+('SELF_CARE_LEVEL_1', '可自理判定', '总分0-3分，判定为可自理', 'SELF_CARE_ASSESSMENT', (SELECT id FROM rule_group WHERE group_code = 'SELF_CARE_LEVEL'), 'CONDITION', 100, 1, '2024-01-01 00:00:00', '2099-12-31 23:59:59', 1, 'system'),
+('SELF_CARE_LEVEL_2', '轻度依赖判定', '总分4-8分，判定为轻度依赖', 'SELF_CARE_ASSESSMENT', (SELECT id FROM rule_group WHERE group_code = 'SELF_CARE_LEVEL'), 'CONDITION', 90, 1, '2024-01-01 00:00:00', '2099-12-31 23:59:59', 1, 'system'),
+('SELF_CARE_LEVEL_3', '中度依赖判定', '总分9-18分，判定为中度依赖', 'SELF_CARE_ASSESSMENT', (SELECT id FROM rule_group WHERE group_code = 'SELF_CARE_LEVEL'), 'CONDITION', 80, 1, '2024-01-01 00:00:00', '2099-12-31 23:59:59', 1, 'system'),
+('SELF_CARE_LEVEL_4', '不能自理判定', '总分≥19分，判定为不能自理', 'SELF_CARE_ASSESSMENT', (SELECT id FROM rule_group WHERE group_code = 'SELF_CARE_LEVEL'), 'CONDITION', 70, 1, '2024-01-01 00:00:00', '2099-12-31 23:59:59', 1, 'system');
+
+-- =====================================================
+-- 22. 体质评估规则定义 - 偏颇体质
+-- =====================================================
+INSERT INTO `rule_definition` (`rule_code`, `rule_name`, `rule_desc`, `scene_code`, `group_id`, `rule_type`, `priority`, `status`, `effective_start_time`, `effective_end_time`, `version`, `create_by`) VALUES
+-- 气虚质判定
+('CONSTITUTION_QIXU_YES', '气虚质=是', '气虚质得分≥11分，判定为是', 'CONSTITUTION_ASSESSMENT', (SELECT id FROM rule_group WHERE group_code = 'CONSTITUTION_DEVIANT'), 'CONDITION', 100, 1, '2024-01-01 00:00:00', '2099-12-31 23:59:59', 1, 'system'),
+('CONSTITUTION_QIXU_TEND', '气虚质=倾向是', '气虚质得分9-10分，判定为倾向是', 'CONSTITUTION_ASSESSMENT', (SELECT id FROM rule_group WHERE group_code = 'CONSTITUTION_DEVIANT'), 'CONDITION', 90, 1, '2024-01-01 00:00:00', '2099-12-31 23:59:59', 1, 'system'),
+('CONSTITUTION_QIXU_NO', '气虚质=否', '气虚质得分≤8分，判定为否', 'CONSTITUTION_ASSESSMENT', (SELECT id FROM rule_group WHERE group_code = 'CONSTITUTION_DEVIANT'), 'CONDITION', 80, 1, '2024-01-01 00:00:00', '2099-12-31 23:59:59', 1, 'system'),
+-- 阳虚质判定
+('CONSTITUTION_YANGXU_YES', '阳虚质=是', '阳虚质得分≥11分，判定为是', 'CONSTITUTION_ASSESSMENT', (SELECT id FROM rule_group WHERE group_code = 'CONSTITUTION_DEVIANT'), 'CONDITION', 100, 1, '2024-01-01 00:00:00', '2099-12-31 23:59:59', 1, 'system'),
+('CONSTITUTION_YANGXU_TEND', '阳虚质=倾向是', '阳虚质得分9-10分，判定为倾向是', 'CONSTITUTION_ASSESSMENT', (SELECT id FROM rule_group WHERE group_code = 'CONSTITUTION_DEVIANT'), 'CONDITION', 90, 1, '2024-01-01 00:00:00', '2099-12-31 23:59:59', 1, 'system'),
+('CONSTITUTION_YANGXU_NO', '阳虚质=否', '阳虚质得分≤8分，判定为否', 'CONSTITUTION_ASSESSMENT', (SELECT id FROM rule_group WHERE group_code = 'CONSTITUTION_DEVIANT'), 'CONDITION', 80, 1, '2024-01-01 00:00:00', '2099-12-31 23:59:59', 1, 'system'),
+-- 平和质判定
+('CONSTITUTION_PINGHE_YES', '平和质=是', '平和质得分≥17分且其他体质最高分<8分', 'CONSTITUTION_ASSESSMENT', (SELECT id FROM rule_group WHERE group_code = 'CONSTITUTION_BALANCED'), 'CONDITION', 100, 1, '2024-01-01 00:00:00', '2099-12-31 23:59:59', 1, 'system'),
+('CONSTITUTION_PINGHE_BASIC', '平和质=基本是', '平和质得分≥17分且其他体质最高分8-9分', 'CONSTITUTION_ASSESSMENT', (SELECT id FROM rule_group WHERE group_code = 'CONSTITUTION_BALANCED'), 'CONDITION', 90, 1, '2024-01-01 00:00:00', '2099-12-31 23:59:59', 1, 'system'),
+('CONSTITUTION_PINGHE_NO', '平和质=否', '不满足平和质条件', 'CONSTITUTION_ASSESSMENT', (SELECT id FROM rule_group WHERE group_code = 'CONSTITUTION_BALANCED'), 'CONDITION', 80, 1, '2024-01-01 00:00:00', '2099-12-31 23:59:59', 1, 'system');
+
+-- =====================================================
+-- 23. 自理能力评估条件组
+-- =====================================================
+INSERT INTO `condition_group` (`rule_id`, `parent_group_id`, `group_logic`, `group_level`, `sort_order`) VALUES
+((SELECT id FROM rule_definition WHERE rule_code = 'SELF_CARE_LEVEL_1'), 0, 'AND', 1, 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'SELF_CARE_LEVEL_2'), 0, 'AND', 1, 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'SELF_CARE_LEVEL_3'), 0, 'AND', 1, 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'SELF_CARE_LEVEL_4'), 0, 'AND', 1, 1);
+
+-- =====================================================
+-- 24. 自理能力评估规则条件
+-- =====================================================
+INSERT INTO `rule_condition` (`rule_id`, `group_id`, `field_code`, `operator`, `field_value`, `value_type`, `sort_order`) VALUES
+-- 可自理: totalScore BETWEEN 0 AND 3
+((SELECT id FROM rule_definition WHERE rule_code = 'SELF_CARE_LEVEL_1'),
+ (SELECT cg.id FROM condition_group cg JOIN rule_definition rd ON cg.rule_id = rd.id WHERE rd.rule_code = 'SELF_CARE_LEVEL_1'),
+ 'totalScore', 'BETWEEN', '0,3', 'CONSTANT', 1),
+
+-- 轻度依赖: totalScore BETWEEN 4 AND 8
+((SELECT id FROM rule_definition WHERE rule_code = 'SELF_CARE_LEVEL_2'),
+ (SELECT cg.id FROM condition_group cg JOIN rule_definition rd ON cg.rule_id = rd.id WHERE rd.rule_code = 'SELF_CARE_LEVEL_2'),
+ 'totalScore', 'BETWEEN', '4,8', 'CONSTANT', 1),
+
+-- 中度依赖: totalScore BETWEEN 9 AND 18
+((SELECT id FROM rule_definition WHERE rule_code = 'SELF_CARE_LEVEL_3'),
+ (SELECT cg.id FROM condition_group cg JOIN rule_definition rd ON cg.rule_id = rd.id WHERE rd.rule_code = 'SELF_CARE_LEVEL_3'),
+ 'totalScore', 'BETWEEN', '9,18', 'CONSTANT', 1),
+
+-- 不能自理: totalScore >= 19
+((SELECT id FROM rule_definition WHERE rule_code = 'SELF_CARE_LEVEL_4'),
+ (SELECT cg.id FROM condition_group cg JOIN rule_definition rd ON cg.rule_id = rd.id WHERE rd.rule_code = 'SELF_CARE_LEVEL_4'),
+ 'totalScore', 'GTE', '19', 'CONSTANT', 1);
+
+-- =====================================================
+-- 25. 自理能力评估规则动作
+-- =====================================================
+INSERT INTO `rule_action` (`rule_id`, `action_type`, `action_code`, `action_params`, `sort_order`) VALUES
+((SELECT id FROM rule_definition WHERE rule_code = 'SELF_CARE_LEVEL_1'), 'RETURN', 'SELF_CARE_RESULT', '{"assessmentResult":"可自理","level":1,"suggestion":"老年人生活自理能力良好，建议保持现有生活习惯，定期进行健康检查"}', 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'SELF_CARE_LEVEL_2'), 'RETURN', 'SELF_CARE_RESULT', '{"assessmentResult":"轻度依赖","level":2,"suggestion":"老年人存在轻度依赖，建议关注日常起居，必要时提供适当协助"}', 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'SELF_CARE_LEVEL_3'), 'RETURN', 'SELF_CARE_RESULT', '{"assessmentResult":"中度依赖","level":3,"suggestion":"老年人存在中度依赖，建议加强日常照护，重点关注如厕和活动能力"}', 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'SELF_CARE_LEVEL_4'), 'RETURN', 'SELF_CARE_RESULT', '{"assessmentResult":"不能自理","level":4,"suggestion":"老年人不能自理，需要专人照护，建议考虑专业护理服务"}', 1);
+
+-- =====================================================
+-- 26. 体质评估条件组（部分示例）
+-- =====================================================
+INSERT INTO `condition_group` (`rule_id`, `parent_group_id`, `group_logic`, `group_level`, `sort_order`) VALUES
+-- 气虚质
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_QIXU_YES'), 0, 'AND', 1, 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_QIXU_TEND'), 0, 'AND', 1, 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_QIXU_NO'), 0, 'AND', 1, 1),
+-- 阳虚质
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_YANGXU_YES'), 0, 'AND', 1, 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_YANGXU_TEND'), 0, 'AND', 1, 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_YANGXU_NO'), 0, 'AND', 1, 1),
+-- 平和质
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_PINGHE_YES'), 0, 'AND', 1, 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_PINGHE_BASIC'), 0, 'AND', 1, 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_PINGHE_NO'), 0, 'AND', 1, 1);
+
+-- =====================================================
+-- 27. 体质评估规则条件（部分示例）
+-- =====================================================
+INSERT INTO `rule_condition` (`rule_id`, `group_id`, `field_code`, `operator`, `field_value`, `value_type`, `sort_order`) VALUES
+-- 气虚质=是: qixu_score >= 11
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_QIXU_YES'),
+ (SELECT cg.id FROM condition_group cg JOIN rule_definition rd ON cg.rule_id = rd.id WHERE rd.rule_code = 'CONSTITUTION_QIXU_YES'),
+ 'qixu_score', 'GTE', '11', 'CONSTANT', 1),
+
+-- 气虚质=倾向是: qixu_score BETWEEN 9 AND 10
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_QIXU_TEND'),
+ (SELECT cg.id FROM condition_group cg JOIN rule_definition rd ON cg.rule_id = rd.id WHERE rd.rule_code = 'CONSTITUTION_QIXU_TEND'),
+ 'qixu_score', 'BETWEEN', '9,10', 'CONSTANT', 1),
+
+-- 气虚质=否: qixu_score <= 8
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_QIXU_NO'),
+ (SELECT cg.id FROM condition_group cg JOIN rule_definition rd ON cg.rule_id = rd.id WHERE rd.rule_code = 'CONSTITUTION_QIXU_NO'),
+ 'qixu_score', 'LTE', '8', 'CONSTANT', 1),
+
+-- 阳虚质=是: yangxu_score >= 11
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_YANGXU_YES'),
+ (SELECT cg.id FROM condition_group cg JOIN rule_definition rd ON cg.rule_id = rd.id WHERE rd.rule_code = 'CONSTITUTION_YANGXU_YES'),
+ 'yangxu_score', 'GTE', '11', 'CONSTANT', 1),
+
+-- 阳虚质=倾向是: yangxu_score BETWEEN 9 AND 10
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_YANGXU_TEND'),
+ (SELECT cg.id FROM condition_group cg JOIN rule_definition rd ON cg.rule_id = rd.id WHERE rd.rule_code = 'CONSTITUTION_YANGXU_TEND'),
+ 'yangxu_score', 'BETWEEN', '9,10', 'CONSTANT', 1),
+
+-- 阳虚质=否: yangxu_score <= 8
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_YANGXU_NO'),
+ (SELECT cg.id FROM condition_group cg JOIN rule_definition rd ON cg.rule_id = rd.id WHERE rd.rule_code = 'CONSTITUTION_YANGXU_NO'),
+ 'yangxu_score', 'LTE', '8', 'CONSTANT', 1),
+
+-- 平和质=是: pinghe_score >= 17 AND other_max_score < 8
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_PINGHE_YES'),
+ (SELECT cg.id FROM condition_group cg JOIN rule_definition rd ON cg.rule_id = rd.id WHERE rd.rule_code = 'CONSTITUTION_PINGHE_YES'),
+ 'pinghe_score', 'GTE', '17', 'CONSTANT', 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_PINGHE_YES'),
+ (SELECT cg.id FROM condition_group cg JOIN rule_definition rd ON cg.rule_id = rd.id WHERE rd.rule_code = 'CONSTITUTION_PINGHE_YES'),
+ 'other_max_score', 'LT', '8', 'CONSTANT', 2),
+
+-- 平和质=基本是: pinghe_score >= 17 AND other_max_score BETWEEN 8 AND 9
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_PINGHE_BASIC'),
+ (SELECT cg.id FROM condition_group cg JOIN rule_definition rd ON cg.rule_id = rd.id WHERE rd.rule_code = 'CONSTITUTION_PINGHE_BASIC'),
+ 'pinghe_score', 'GTE', '17', 'CONSTANT', 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_PINGHE_BASIC'),
+ (SELECT cg.id FROM condition_group cg JOIN rule_definition rd ON cg.rule_id = rd.id WHERE rd.rule_code = 'CONSTITUTION_PINGHE_BASIC'),
+ 'other_max_score', 'BETWEEN', '8,9', 'CONSTANT', 2),
+
+-- 平和质=否: other_max_score >= 10 OR pinghe_score < 17 (简化为 other_max_score >= 10)
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_PINGHE_NO'),
+ (SELECT cg.id FROM condition_group cg JOIN rule_definition rd ON cg.rule_id = rd.id WHERE rd.rule_code = 'CONSTITUTION_PINGHE_NO'),
+ 'other_max_score', 'GTE', '10', 'CONSTANT', 1);
+
+-- =====================================================
+-- 28. 体质评估规则动作
+-- =====================================================
+INSERT INTO `rule_action` (`rule_id`, `action_type`, `action_code`, `action_params`, `sort_order`) VALUES
+-- 气虚质
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_QIXU_YES'), 'RETURN', 'CONSTITUTION_RESULT', '{"qixu_result":"是","guidance":["情志调摄","饮食调养","起居调摄","运动保健","穴位保健"]}', 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_QIXU_TEND'), 'RETURN', 'CONSTITUTION_RESULT', '{"qixu_result":"倾向是","guidance":["情志调摄","饮食调养"]}', 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_QIXU_NO'), 'RETURN', 'CONSTITUTION_RESULT', '{"qixu_result":"否"}', 1),
+
+-- 阳虚质
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_YANGXU_YES'), 'RETURN', 'CONSTITUTION_RESULT', '{"yangxu_result":"是","guidance":["情志调摄","饮食调养","起居调摄","运动保健","穴位保健"]}', 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_YANGXU_TEND'), 'RETURN', 'CONSTITUTION_RESULT', '{"yangxu_result":"倾向是","guidance":["饮食调养","起居调摄"]}', 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_YANGXU_NO'), 'RETURN', 'CONSTITUTION_RESULT', '{"yangxu_result":"否"}', 1),
+
+-- 平和质
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_PINGHE_YES'), 'RETURN', 'CONSTITUTION_RESULT', '{"pinghe_result":"是","message":"体质平和，身体健康，建议保持良好生活习惯"}', 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_PINGHE_BASIC'), 'RETURN', 'CONSTITUTION_RESULT', '{"pinghe_result":"基本是","message":"体质基本平和，存在轻微偏颇倾向，建议适当调理"}', 1),
+((SELECT id FROM rule_definition WHERE rule_code = 'CONSTITUTION_PINGHE_NO'), 'RETURN', 'CONSTITUTION_RESULT', '{"pinghe_result":"否","message":"体质存在明显偏颇，建议进行针对性调理"}', 1);

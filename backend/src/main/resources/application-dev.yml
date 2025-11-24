@@ -17,9 +17,12 @@ spring:
 
   # Redis配置
   redis:
-    host: 127.0.0.1
-    port: 6379
-    password: 123456
+#    host: 127.0.0.1
+#    port: 6379
+#    password: 123456
+    host: 10.23.74.218
+    port: 30080
+    password: jztadmin600998
     database: 1
     timeout: 3000
     lettuce:
