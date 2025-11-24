@@ -3,7 +3,9 @@ package com.example.ruleengine.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.example.ruleengine.config.ArrayToJsonStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -49,6 +51,7 @@ public class RuleCondition implements Serializable {
      * 字段值(JSON格式)
      */
     @JsonAlias("value")
+    @JsonDeserialize(using = ArrayToJsonStringDeserializer.class)
     private String fieldValue;
 
     /**

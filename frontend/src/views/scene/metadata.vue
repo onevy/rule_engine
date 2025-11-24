@@ -44,7 +44,7 @@
         </el-table-column>
         <el-table-column prop="category" label="分类" width="120" />
         <el-table-column
-          prop="operators"
+          prop="supportedOperators"
           label="支持操作符"
           min-width="200"
           show-overflow-tooltip
@@ -280,7 +280,7 @@ const handleEdit = (row) => {
   metadataForm.fieldName = row.fieldName
   metadataForm.fieldType = row.fieldType
   metadataForm.category = row.category
-  metadataForm.operatorsList = row.operators ? row.operators.split(',') : []
+  metadataForm.operatorsList = row.supportedOperators ? row.supportedOperators.split(',') : []
   metadataForm.defaultValue = row.defaultValue || ''
   metadataForm.valueRange = row.valueRange || ''
   metadataForm.description = row.description || ''
@@ -324,7 +324,7 @@ const handleSubmit = async () => {
       fieldName: metadataForm.fieldName,
       fieldType: metadataForm.fieldType,
       category: metadataForm.category,
-      operators: metadataForm.operatorsList.join(','),
+      supportedOperators: metadataForm.operatorsList.join(','),
       defaultValue: metadataForm.defaultValue,
       valueRange: metadataForm.valueRange,
       description: metadataForm.description

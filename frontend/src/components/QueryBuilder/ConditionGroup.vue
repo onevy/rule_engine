@@ -12,7 +12,12 @@
           <el-icon><Plus /></el-icon>
           添加条件
         </el-button>
-        <el-button type="success" size="small" @click="addGroup">
+        <el-button
+          v-if="depth < maxDepth"
+          type="success"
+          size="small"
+          @click="addGroup"
+        >
           <el-icon><FolderAdd /></el-icon>
           添加条件组
         </el-button>
@@ -36,6 +41,8 @@
             :group="item"
             :fields="fields"
             :is-root="false"
+            :depth="depth + 1"
+            :max-depth="maxDepth"
             @update="(newGroup) => updateCondition(index, newGroup)"
             @remove="removeCondition(index)"
           />
@@ -76,6 +83,14 @@ const props = defineProps({
   isRoot: {
     type: Boolean,
     default: false
+  },
+  depth: {
+    type: Number,
+    default: 1
+  },
+  maxDepth: {
+    type: Number,
+    default: 2
   }
 })
 
